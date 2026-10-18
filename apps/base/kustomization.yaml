@@ -1,3 +1,9 @@
+# ============================================================
+# BASE — Kustomization
+# Lista os manifestos que compõem a aplicação.
+# Os overlays herdam tudo daqui e sobrescrevem apenas o que muda.
+# Princípio: DRY (Don't Repeat Yourself) entre ambientes.
+# ============================================================
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 

@@ -1,3 +1,10 @@
+# ============================================================
+# ArgoCD Application — dev
+#
+# Ambiente de desenvolvimento — 1 réplica, recursos reduzidos.
+# Cada ambiente tem sua própria Application apontando para
+# o overlay correspondente no repositório.
+# ============================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -5,13 +12,16 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://github.com/carlosconca/meu-repo-gitops.git
-    targetRevision: main
-    path: apps/overlays/dev
+    targetRevision: main            # branch monitorada
+    path: apps/overlays/dev        # overlay de dev
+
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
+
   syncPolicy:
     automated:
       prune: true

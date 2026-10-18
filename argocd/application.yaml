@@ -1,4 +1,12 @@
-# argocd/application.yaml
+# ============================================================
+# ArgoCD Application — producao
+#
+# Esta é a "ponte" entre o Git e o cluster.
+# O ArgoCD observa o repositório e aplica qualquer mudança
+# automaticamente — ninguém roda `kubectl apply` manualmente.
+#
+# Aplicar: kubectl apply -f argocd/application.yaml
+# ============================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,16 +14,19 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://github.com/carlosconca/meu-repo-gitops.git
-    targetRevision: main
-    path: apps/overlays/producao
+    targetRevision: main                  # branch monitorada
+    path: apps/overlays/producao         # caminho do Kustomize no repo
+
   destination:
-    server: https://kubernetes.default.svc
+    server: https://kubernetes.default.svc  # cluster local (in-cluster)
     namespace: producao
+
   syncPolicy:
     automated:
-      prune: true       # remove recursos que saíram do Git
-      selfHeal: true    # reverte mudanças manuais feitas fora do Git
+      prune: true      # remove recursos que saíram do Git (evita drift)
+      selfHeal: true   # reverte mudanças manuais feitas fora do Git
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true   # cria o namespace se não existir

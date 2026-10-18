@@ -1,16 +1,43 @@
+# ============================================================
+# OVERLAY — dev
+# Herda tudo do base e sobrescreve apenas o que difere em dev:
+#   - 1 réplica (economiza recursos locais)
+#   - resources reduzidos
+#   - label de ambiente para identificação
+# ============================================================
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - ../../base
 
+# Prefixo em todos os recursos: nginx-deployment → dev-nginx-deployment
 namePrefix: dev-
 
+# Adiciona label de ambiente em todos os recursos
+labels:
+  - pairs:
+      environment: dev
+    includeSelectors: false
+
 patches:
+  # Sobrescreve réplicas para 1 em dev (economiza recursos)
   - patch: |-
       - op: replace
         path: /spec/replicas
         value: 1
+    target:
+      kind: Deployment
+      name: nginx-deployment
+
+  # Reduz limites de recursos em dev
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "32Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "64Mi"
     target:
       kind: Deployment
       name: nginx-deployment

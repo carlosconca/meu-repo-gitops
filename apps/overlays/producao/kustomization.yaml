@@ -1,12 +1,31 @@
+# ============================================================
+# OVERLAY — producao
+# Herda tudo do base e sobrescreve apenas o que difere em produção:
+#   - 3 réplicas (alta disponibilidade)
+#   - resources completos conforme base
+#   - label de ambiente para identificação
+#
+# 🔁 GitOps: para escalar, edite `value` abaixo, commit e push.
+#    O ArgoCD detecta a mudança e aplica o rollout automaticamente.
+# ============================================================
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - ../../base
 
+# Prefixo em todos os recursos: nginx-deployment → prod-nginx-deployment
 namePrefix: prod-
 
+# Adiciona label de ambiente em todos os recursos
+labels:
+  - pairs:
+      environment: producao
+    includeSelectors: false
+
 patches:
+  # 3 réplicas em produção garante alta disponibilidade
+  # Com RollingUpdate + maxUnavailable: 0 → zero downtime durante deploys
   - patch: |-
       - op: replace
         path: /spec/replicas

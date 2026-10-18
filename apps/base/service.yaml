@@ -1,3 +1,11 @@
+# ============================================================
+# BASE — Service (ClusterIP)
+# Fornece um endpoint estável para os Pods do Deployment.
+# Pods têm IPs efêmeros — o Service resolve esse problema com DNS interno.
+#
+# Acesso interno: http://nginx-service
+# DNS completo:   http://nginx-service.<namespace>.svc.cluster.local
+# ============================================================
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,10 +13,10 @@ metadata:
   labels:
     app: nginx
 spec:
+  type: ClusterIP      # interno ao cluster — use NodePort para dev local ou LoadBalancer para cloud
   selector:
-    app: nginx
+    app: nginx         # seleciona os pods com esse label — deve bater com o Deployment
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
+      port: 80         # porta do Service (o que os outros serviços acessam)
+      targetPort: 80   # porta do container (containerPort no Deployment)

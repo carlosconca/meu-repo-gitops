@@ -1,4 +1,9 @@
-# deployment.yaml
+# ============================================================
+# BASE — Deployment
+# Este manifesto define o estado desejado da aplicação.
+# No GitOps, este arquivo É a fonte da verdade.
+# Nunca use `kubectl set image` em produção — edite aqui e dê push.
+# ============================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,16 +11,20 @@ metadata:
   labels:
     app: nginx
 spec:
-  replicas: 3
-  revisionHistoryLimit: 5
+  replicas: 3                  # sobrescrito pelos overlays (dev=1, producao=3)
+  revisionHistoryLimit: 5      # mantém histórico dos últimos 5 ReplicaSets (rollback)
+
+  # RollingUpdate: substitui pods gradualmente — zero downtime
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      maxSurge: 1          # cria 1 pod extra durante o update
+      maxUnavailable: 0    # nunca derruba um pod antes de o novo estar pronto
+
   selector:
     matchLabels:
-      app: nginx
+      app: nginx           # deve bater com template.metadata.labels
+
   template:
     metadata:
       labels:
@@ -23,9 +32,13 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.21.6
+          image: nginx:1.21.6    # tag imutável — evite "latest" em produção
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+
+          # Resources: requests = garantido | limits = máximo permitido
+          # Sem isso, um pod pode consumir todos os recursos do node.
           resources:
             requests:
               memory: "64Mi"
@@ -33,15 +46,21 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "500m"
+
+          # livenessProbe: se falhar → container é reiniciado
           livenessProbe:
             httpGet:
               path: /
               port: 80
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
+
+          # readinessProbe: se falhar → pod sai do Service (não recebe tráfego)
           readinessProbe:
             httpGet:
               path: /
               port: 80
             initialDelaySeconds: 5
             periodSeconds: 5
+            failureThreshold: 3
